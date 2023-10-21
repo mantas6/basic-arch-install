@@ -17,5 +17,18 @@ mount -t ext4 ${DISK}2 /mnt
 mkdir -p /mnt/boot/efi
 mount -t vfat -L EFIBOOT /mnt/boot/
 
-pacstrap /mnt base
-genfstab -L /mnt >> /mnt/etc/fstab
+pacstrap /mnt base linux linux-firmware
+genfstab -U /mnt >> /mnt/etc/fstab
+
+arch-chroot /mnt
+ln -sf /usr/share/zoneinfo/Europe/Vilnius /etc/localtime
+hwclock --systohc
+
+sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+locale-gen
+
+bootctl install
+cp /usr/share/systemd/bootctl/arch.conf /boot/loader/entries/arch.conf
+echo "default arch.conf" >> /boot/loader/loader.conf
+echo "timeout 1" >> /boot/loader/loader.conf
+systemctl enable systemd-boot-update
