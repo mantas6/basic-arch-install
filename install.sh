@@ -5,7 +5,7 @@ refector --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
 
 sgdisk -Z ${DISK}
 sgdisk -a 2048 -o ${DISK}
-sgdisk -n 1::+300M --typecode=1:ef00 --change-name=1:'EFIBOOT' ${DISK}
+sgdisk -n 1::+1G --typecode=1:ef00 --change-name=1:'EFIBOOT' ${DISK}
 sgdisk -n 2::-0 --typecode=2:8300 --change-name=2:'ROOT' ${DISK}
 
 partprobe ${DISK}
