@@ -5,6 +5,8 @@ CONFIG_FILE="options.conf"
 INSTALL_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DISK=/dev/sda
 
+UUID=$(basename "$(readlink -f /dev/disk/by-uuid/* | grep "$DISK")")
+
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Configuration file not found: $CONFIG_FILE"
     exit 1
@@ -45,13 +47,25 @@ sed -i 's/^#Color/Color/' /etc/pacman.conf
 
 echo "$HOSTNAME" > /etc/hostname
 
+#
+# Bootloader
+#
 bootctl install
-cp /usr/share/systemd/bootctl/arch.conf /boot/loader/entries/arch.conf
 echo "default arch.conf" >> /boot/loader/loader.conf
 echo "timeout 1" >> /boot/loader/loader.conf
+
+# Main entry
+cp /usr/share/systemd/bootctl/arch.conf /boot/loader/entries/arch.conf
+sed -i "s|root=PARTUUID=XXXX|PARTUUID=/dev/dev/disk/by-uuid/$UUID|" /boot/loader/entries/arch.conf
+sed -i "s|roofstyoe=XXXX|roofstyoe=ext4|" /boot/loader/entries/arch.conf
+
+# Fallback entry
+cp /boot/loader/entries/arch.conf /boot/loader/entries/arch-fallback.conf
+sed -i 's|/initramfs-linux.img|/initramfs-linux-fallback.img|' /boot/loader/entries/arch-fallback.conf
+
 systemctl enable systemd-boot-update
 
-systemvtl enable fstrim.timer
+systemctl enable fstrim.timer
 
 useradd -m -G wheel video -s /bin/bash "$USER"
 
