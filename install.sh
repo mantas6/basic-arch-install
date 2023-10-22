@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 
+CONFIG_FILE="options.conf"
+
 INSTALL_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DISK=/dev/sda
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Configuration file not found: $CONFIG_FILE"
+    exit 1
+fi
+
+config=$(grep -v '^#' "$CONFIG_FILE" | awk -F= '{print $1"="$2}')
+eval "$config"
 
 setfont ter-128b
 refector --latest 5 --sort rate --save /etc/pacman.d/mirrorlist
@@ -33,7 +43,7 @@ locale-gen
 sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
 sed -i 's/^#Color/Color/' /etc/pacman.conf
 
-echo "localhost" > /etc/hostname
+echo "$HOSTNAME" > /etc/hostname
 
 bootctl install
 cp /usr/share/systemd/bootctl/arch.conf /boot/loader/entries/arch.conf
@@ -43,6 +53,6 @@ systemctl enable systemd-boot-update
 
 systemvtl enable fstrim.timer
 
-useradd -m -G wheel video -s /bin/bash mantas
+useradd -m -G wheel video -s /bin/bash "$USER"
 
 rsync -av --relative "$INSTALL_SCRIPT_DIR/root" /
